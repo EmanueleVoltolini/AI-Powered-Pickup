@@ -2,15 +2,30 @@
 import torch
 import os
 import torch.nn as nn
+import numpy as np
 from torch.utils.data import Dataset
 import torchaudio
 import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
+import signal_proc as sign
 
 # Define some constant
 EPOCHS = 2
 LEARNING_RATE = .001
+n = 1000
+
+# Allocate some variables 
+eps_h = np.zeros([1000,])
+
+def loss_func(y_hi, y_ht):
+    num_h = 0
+    den_h = 0
+    for j in range(n):
+        num_h = num_h + (abs(y_ht[j]-y_hi[j]))**2
+        den_h = den_h + (abs(y_ht[j]))**2
+    eps_h = num_h/den_h
+    return eps_h
 class GuitarDataset(Dataset):
 
     def __init__(self, audio_dir):
@@ -20,7 +35,7 @@ class GuitarDataset(Dataset):
         pass
 
     def __getitem__(self, name, type):
-        audio_sample_path  = os.path.join(self.audio_dir,name + "_" + type + ".wav")
+        audio_sample_path  = os.path.join(self.audio_dir,name + "-" + type + ".wav")
         print(audio_sample_path)
         signal, sr = torchaudio.load(audio_sample_path)
         return signal, sr
@@ -42,13 +57,15 @@ class RNN(nn.Module):
         return predicted
 
 # Need to modify according to my code
-def train_one_epoch(model, data_loader, loss_fn, optimizer, device):
+def train_one_epoch(model, data_loader, optimizer, device):
     for inputs, targets in data_loader:
         imputs, targets = inputs.to(device), targets.to(device)         # We need to assign the data to the device
 
+        inputs = sign.high_pass(imputs)
+        targets = sign.high_pass(targets)
         # calculate Loss
         predictions  = model(inputs)
-        loss = loss_fn(predictions, targets)
+        loss = loss_func(predictions, targets)
 
         # backpropagate loss and update weights
         optimizer.zero_grad()                                           # at every iteration the optimizer is gonna calculate gradients to update the weights, these gradients
@@ -58,7 +75,7 @@ def train_one_epoch(model, data_loader, loss_fn, optimizer, device):
 
     print(f'Loss: {loss.item()}')
 
-def train(model, data_loader, loss_fn, optimizer, device, epochs):                                                            # higher level function that will use train_one_epoch at each iteration,
+def train(model, data_loader, loss_fn, optimizer, device, epochs):      # higher level function that will use train_one_epoch at each iteration,
                                                                         # we will go throught all the epoch that we want to train the model for
     for i in range(epochs):
         print(f"Epoch {i+1}")

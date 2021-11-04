@@ -77,7 +77,7 @@ if __name__ == "__main__":
 
     #build model 
     if torch.cuda.is_available():
-        device = "cpu"
+        device = "cuda"
     else:
         device = "cpu"
 
