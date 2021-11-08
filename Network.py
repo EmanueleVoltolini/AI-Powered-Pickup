@@ -4,16 +4,20 @@ import os
 import torch.nn as nn
 import numpy as np
 from torch.utils.data import Dataset
+from torch.utils.data import DataLoader
 import torchaudio
 import torchvision
 import torchvision.transforms as transforms
 import matplotlib.pyplot as plt
+from Tut.Audiotut import BATCH_SIZE
 import signal_proc as sign
 
 # Define some constant
 EPOCHS = 2
 LEARNING_RATE = .001
 n = 1000
+AUDIO_DIR = "Dataset"
+BATCH_SIZE = 40
 
 # Allocate some variables 
 eps_h = np.zeros([1000,])
@@ -84,15 +88,34 @@ def train(model, data_loader, loss_fn, optimizer, device, epochs):      # higher
     print("Train is done")
 #
 
+if __name__ == "__main__":
+    Guitar_dataset = GuitarDataset(AUDIO_DIR)
+    audio_input , sample_rate = Guitar_dataset.__getitem__("Chords","input")    
+    print(audio_input)
+    print(sample_rate)
+    audio_target, sample_rate_tar = Guitar_dataset.__getitem__("Chords","target")
+    print(audio_target)
+    print(sample_rate_tar)
 
-AUDIO_DIR = "Dataset"
-Guitar_dataset = GuitarDataset(AUDIO_DIR)
-audio_input , sample_rate = Guitar_dataset.__getitem__("Chords","input")    
-print(audio_input)
-print(sample_rate)
-audio_target, sample_rate_tar = Guitar_dataset.__getitem__("Chords","target")
-print(audio_target)
-print(sample_rate_tar)
+    GuitarRNN = RNN()
+    print(GuitarRNN)
+    train_data = 
 
-GuitarRNN = RNN()
-print(GuitarRNN)
+    #Now we use dataloader 
+    # Dataloader --> class we can use to wrap a dataset, and it will allow us to load data in batches
+    train_data_loader = DataLoader(train_data, batch_size = BATCH_SIZE)
+
+    #build model 
+    if torch.cuda.is_available():
+        device = "cuda"
+    else:
+        device = "cpu"
+
+    feed_forward_net = FeedForwardNet().to(device)
+
+    # instantiate loss function + optimizer
+    loss_fn = nn.CrossEntropyLoss()
+    optimizer = torch.optim.Adam(feed_forward_net.parameters(),lr=LEARNING_RATE)
+
+    # Train our model 
+    train(feed_forward_net, train_data_loader, loss_fn, optimizer, device, EPOCHS)
