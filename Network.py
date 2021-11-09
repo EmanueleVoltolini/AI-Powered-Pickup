@@ -193,7 +193,6 @@ class LossWrapper(nn.Module):
 
 class Loss(nn.Module):
     def __init__(self):
-        super(ESRLoss, self).__init__()
         self.epsilon = 0.00001
  
     def forward(self, output, target):
@@ -212,13 +211,12 @@ class RNN(nn.Module):
         self.input_size = input_size
         self.output_size = output_size
         self.LSTM = nn.LSTM(input_size,hidden_size,num_layers,bias)
-        self.rec = wrapperargs(getattr(nn, 'LSTM'), [input_size, hidden_size, num_layers])
         self.FullyConnected = nn.Linear(hidden_size,output_size,bias)
         self.hidden = None
 
     def forward(self, x):
         res = x[:,:,0:1]
-        x, self.hidden = self.rec(x, self.hidden)
+        x, self.hidden = self.LSTM(x, self.hidden)        
         return self.FullyConnected(x) + res
 
     # detach hidden state, this resets gradient tracking on the hidden state
@@ -233,7 +231,7 @@ class RNN(nn.Module):
         self.hidden = None
     
     def train_one_epoch(self, in_data, tar_data, up_fr, init_samples, batch_size, optim, loss_func):
-        shuffle = torch.randperm(in_data.shape[2])
+        shuffle = torch.randperm(in_data.shape[1])
 
         ep_loss = 0
 
@@ -242,15 +240,16 @@ class RNN(nn.Module):
             target_batch = tar_data[:,shuffle[batch_i*batch_size:(batch_i+1)*batch_size],:]
             
             self(input_batch[0:init_samples, :,:])
-            self.zero_grad()
+            
+            self.zero_grad()                                  #set the gradient to zero, we don't want the gradient to acccumulate for each mini-batch
 
             start_i = init_samples
             batch_loss = 0
             for k in range(math.ceil((input_batch.shape[0] - init_samples) / up_fr)):
               output = self(input_batch[start_i:start_i + up_fr, :,:])
 
-              loss = loss_func(output,target_batch[start_i:start_i + up_fr, :,:])
-              loss.sum().backward()
+              loss = loss_func.forward(output,target_batch[start_i:start_i + up_fr, :,:])
+              loss.backward()
               optim.step()
 
               # Set the network hidden state, to detach it from the computation graph
@@ -265,20 +264,6 @@ class RNN(nn.Module):
             ep_loss += batch_loss / (k + 1)
             self.reset_hidden()
         return ep_loss / (batch_i + 1)
-
-    # only proc processes a the input data and calculates the loss, optionally grad can be tracked or not
-    def process_data(self, input_data, target_data, loss_fcn, chunk, grad=False):
-        with (torch.no_grad() if not grad else nullcontext()):
-            output = torch.empty_like(target_data)
-            for l in range(int(output.size()[0] / chunk)):
-                output[l * chunk:(l + 1) * chunk] = self(input_data[l * chunk:(l + 1) * chunk])
-                self.detach_hidden()
-            # If the data set doesn't divide evenly into the chunk length, process the remainder
-            if not (output.size()[0] / chunk).is_integer():
-                output[(l + 1) * chunk:-1] = self(input_data[(l + 1) * chunk:-1])
-            self.reset_hidden()
-            loss = loss_fcn(output, target_data)
-        return output, loss
 
 #%%
 if __name__ == "__main__":
@@ -358,11 +343,11 @@ if __name__ == "__main__":
         epoch_loss = network.train_one_epoch(train_in,train_tar, up_freq, 1000, batch_size,optimiser,loss_functions)
         losses.append(epoch_loss.item())
         # Run validation
-        val_output, val_loss = network.process_data(val_in,
-                                            val_tar, loss_functions,7)
-        scheduler.step(val_loss)
+#        val_output, val_loss = network.process_data(val_in,
+#                                            val_tar, loss_functions,7)
+#        scheduler.step(val_loss)
 #%%
-    x = np.linspace(1,len(losses),700)
+    x = np.linspace(1,len(losses),30)
     plt.figure()
     plt.plot(x,losses)
     plt.xlabel("epochs")
