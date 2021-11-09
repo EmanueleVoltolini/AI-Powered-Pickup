@@ -192,18 +192,18 @@ class LossWrapper(nn.Module):
         return loss
 
 class Loss(nn.Module):
-    def __init__(self, weight=None, size_average=True):
-        super(Loss, self).__init__()
+    def __init__(self):
+        super(ESRLoss, self).__init__()
+        self.epsilon = 0.00001
  
-    def forward(self, inputs, targets):                
-        num_h = 0
-        den_h = 0
-        for j in range(len(inputs_hp)):
-            num_h = num_h + (abs(targets_hp[j]-input_hp[j]))**2
-            den_h = den_h + (abs(targets_hp[j]))**2
-        eps = torch.tensor(num_h/den_h, requires_grad=True)
+    def forward(self, output, target):
+        loss = torch.add(target, -output)
+        loss = torch.pow(loss, 2)
+        loss = torch.mean(loss)
+        energy = torch.mean(torch.pow(target, 2)) + self.epsilon
+        loss = torch.div(loss, energy)
+        return loss
 
-        return eps_h
 
 class RNN(nn.Module):
 
@@ -250,7 +250,7 @@ class RNN(nn.Module):
               output = self(input_batch[start_i:start_i + up_fr, :,:])
 
               loss = loss_func(output,target_batch[start_i:start_i + up_fr, :,:])
-              loss.backward()
+              loss.sum().backward()
               optim.step()
 
               # Set the network hidden state, to detach it from the computation graph
@@ -284,7 +284,7 @@ class RNN(nn.Module):
 if __name__ == "__main__":
 
     # Define some constant
-    EPOCHS = 700
+    EPOCHS = 30
     #LEARNING_RATE = 5*pow(10, -4)
     LEARNING_RATE = 0.01
     up_freq = 2048
@@ -345,8 +345,8 @@ if __name__ == "__main__":
         cuda = 1
 
     optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
-    loss_functions = LossWrapper({"ESR": 0.75})
-    #loss_functions = Loss()    
+    #loss_functions = LossWrapper({"ESR": 0.75})
+    loss_functions = Loss()    
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=True)
 
