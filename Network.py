@@ -20,6 +20,7 @@ import sklearn.preprocessing as preprocessing
 from scipy.io import wavfile
 from scipy import signal   
 from pydub import AudioSegment, effects  
+from contextlib import nullcontext
 
 #%% FUNCTIONS
 
@@ -265,13 +266,20 @@ class RNN(nn.Module):
             self.reset_hidden()
         return ep_loss / (batch_i + 1)
 
+        # only proc processes a the input data and calculates the loss, optionally grad can be tracked or not
+    def process_data(self, input_data, target_data, loss_fcn, grad=False):
+        with (torch.no_grad() if not grad else nullcontext()):
+            output = self(input_data)
+            loss = loss_fcn(output, target_data)
+        return output, loss
+
 #%%
 if __name__ == "__main__":
 
     # Define some constant
-    EPOCHS = 30
-    #LEARNING_RATE = 5*pow(10, -4)
-    LEARNING_RATE = 0.01
+    EPOCHS = 500
+    LEARNING_RATE = 5*pow(10, -4)
+    #LEARNING_RATE = 0.01
     up_freq = 2048
     AUDIO_DIR = "Dataset"
     n_segments = 40
@@ -287,11 +295,14 @@ if __name__ == "__main__":
     validata = concatenate_audio(validfiles)
     testdata = concatenate_audio(testfile)
 
+    train_split_in = split_audio(traindata[:,0],int(fs/2))
+    train_split_tar = split_audio(traindata[:,1],int(fs/2))
  
     traindata[:,0] = smooth_signal(traindata[:,0])
     validata[:,0] = smooth_signal(validata[:,0])
     testdata[:,0] = smooth_signal(testdata[:,0])
     
+
     train_hp = np.zeros(traindata.shape)
     val_hp = np.zeros(validata.shape)
     test_hp = np.zeros(testdata.shape)
@@ -347,7 +358,7 @@ if __name__ == "__main__":
 #                                            val_tar, loss_functions,7)
 #        scheduler.step(val_loss)
 #%%
-    x = np.linspace(1,len(losses),30)
+    x = np.linspace(1,len(losses),300)
     plt.figure()
     plt.plot(x,losses)
     plt.xlabel("epochs")
@@ -357,8 +368,8 @@ if __name__ == "__main__":
     torch.save(network.state_dict(),PATH)
 
 # %%
-    test_output, test_loss = network.process_data(test_in,
-                                     test_tar, loss_functions, 7)
+    test_output, test_loss = network.process_data(train_split_in,
+                                     train_split_tar, loss_functions, 10000)
     from scipy.io.wavfile import write
     write("test_out_final.wav", 44100, test_output.cpu().numpy()[:, 0, 0].astype(np.int16))
 # %%
