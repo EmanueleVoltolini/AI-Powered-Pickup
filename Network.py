@@ -266,18 +266,25 @@ class RNN(nn.Module):
             self.reset_hidden()
         return ep_loss / (batch_i + 1)
 
-        # only proc processes a the input data and calculates the loss, optionally grad can be tracked or not
-    def process_data(self, input_data, target_data, loss_fcn, grad=False):
+    # only proc processes a the input data and calculates the loss, optionally grad can be tracked or not
+    def process_data(self, input_data, target_data, loss_fcn, chunk, grad=False):
         with (torch.no_grad() if not grad else nullcontext()):
-            output = self(input_data)
-            loss = loss_fcn(output, target_data)
+            output = torch.empty_like(target_data)
+            for l in range(int(output.size()[0] / chunk)):
+                output[l * chunk:(l + 1) * chunk] = self(input_data[l * chunk:(l + 1) * chunk])
+                self.detach_hidden()
+            # If the data set doesn't divide evenly into the chunk length, process the remainder
+            if not (output.size()[0] / chunk).is_integer():
+                output[(l + 1) * chunk:-1] = self(input_data[(l + 1) * chunk:-1])
+            self.reset_hidden()
+            loss = loss_fcn.forward(output, target_data)
         return output, loss
 
 #%%
 if __name__ == "__main__":
 
     # Define some constant
-    EPOCHS = 500
+    EPOCHS = 10
     LEARNING_RATE = 5*pow(10, -4)
     #LEARNING_RATE = 0.01
     up_freq = 2048
@@ -295,9 +302,12 @@ if __name__ == "__main__":
     validata = concatenate_audio(validfiles)
     testdata = concatenate_audio(testfile)
 
-    train_split_in = split_audio(traindata[:,0],int(fs/2))
-    train_split_tar = split_audio(traindata[:,1],int(fs/2))
+    #train_split_in = split_audio(traindata[:,0],int(fs/2))
+    #train_split_tar = split_audio(traindata[:,1],int(fs/2))
  
+    train_split_in = split_audio(traindata[:,0], int(fs/2))
+    train_split_tar = split_audio(traindata[:,1], int(fs/2))
+
     traindata[:,0] = smooth_signal(traindata[:,0])
     validata[:,0] = smooth_signal(validata[:,0])
     testdata[:,0] = smooth_signal(testdata[:,0])
@@ -342,7 +352,8 @@ if __name__ == "__main__":
 
     optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
     #loss_functions = LossWrapper({"ESR": 0.75})
-    loss_functions = Loss()    
+    loss_functions = Loss()   
+    
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=True)
 
@@ -358,18 +369,36 @@ if __name__ == "__main__":
 #                                            val_tar, loss_functions,7)
 #        scheduler.step(val_loss)
 #%%
-    x = np.linspace(1,len(losses),300)
+    x = np.linspace(1,len(losses),10)
     plt.figure()
     plt.plot(x,losses)
     plt.xlabel("epochs")
     plt.title("loss")  
 # %%
-    PATH = 'AI-Powered-Pickup'
+    PATH = 'AI-Powered-Pickup_2'
     torch.save(network.state_dict(),PATH)
-
+#%% LOAD A MODEL
+    network = RNN()
+    network.load_state_dict(torch.load(PATH))
+    network.eval()
 # %%
-    test_output, test_loss = network.process_data(train_split_in,
-                                     train_split_tar, loss_functions, 10000)
+    train_split_in = split_audio(traindata[:,0], int(fs/2))
+    train_split_tar = split_audio(traindata[:,1], int(fs/2))
+#    output, loss = network.process_data(train_split_in,
+#                                     train_split_tar, loss_functions, 100000)
+#    from scipy.io.wavfile import write
+#    write("test_out_final.wav", 44100, output.cpu().numpy()[:, 0, 0].astype(np.int16))
+# %%
+    output, loss = network.process_data(train_split_in,
+                                     train_split_tar, loss_functions, 1)
+
+#%%
+    out = np.zeros([len(traindata),1])
+    order = output[1]
+    for i in range(output.shape[1]):
+        out[i*output.shape[0]:i*output.shape[0]+output.shape[0]] = (output[:,i,:]).cpu().numpy()
+
+#%%
     from scipy.io.wavfile import write
-    write("test_out_final.wav", 44100, test_output.cpu().numpy()[:, 0, 0].astype(np.int16))
+    write("test_out_final.wav", 44100, out.astype(np.int16))
 # %%
