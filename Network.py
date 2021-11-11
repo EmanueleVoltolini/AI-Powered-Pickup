@@ -112,8 +112,8 @@ def wrapperargs(func, args):
     return func(*args)
 
 def smooth_signal(input):
-  smooth_input = smooth(input,7,'blackman')
-  return smooth_input[3:-3]
+  smooth_input = smooth(input,31,'blackman')
+  return smooth_input[15:-15]
 
 #%% MODEL 
 
@@ -192,11 +192,33 @@ class LossWrapper(nn.Module):
             loss += torch.mul(losses(output, target), self.loss_factors[i])
         return loss
 
+class PreEmph(nn.Module):
+    def __init__(self):
+        super(PreEmph, self).__init__()
+        self.epsilon = 0.00001
+        self.zPad = len([-0.95, 1]) - 1
+
+        self.conv_filter = nn.Conv1d(1, 1, 2, bias=False)
+        self.conv_filter.weight.data = torch.tensor([[[-0.95, 1]]], requires_grad=False)
+        
+    def forward(self, output, target):
+      # zero pad the input/target so the filtered signal is the same length
+      output = torch.cat((torch.zeros(self.zPad, output.shape[1], 1), output))
+      target = torch.cat((torch.zeros(self.zPad, target.shape[1], 1), target))
+      # Apply pre-emph filter, permute because the dimension order is different for RNNs and Convs in pytorch...
+      output = self.conv_filter(output.permute(1, 2, 0))
+      target = self.conv_filter(target.permute(1, 2, 0))
+
+      return output.permute(2, 0, 1), target.permute(2, 0, 1)
+
 class Loss(nn.Module):
     def __init__(self):
+        super(Loss,self).__init__()
+        self.pre = PreEmph()
         self.epsilon = 0.00001
  
     def forward(self, output, target):
+        output , target = self.pre(output, target)
         loss = torch.add(target, -output)
         loss = torch.pow(loss, 2)
         loss = torch.mean(loss)
@@ -375,7 +397,7 @@ if __name__ == "__main__":
     plt.xlabel("epochs")
     plt.title("loss")  
 # %%
-    PATH = 'AI-Powered-Pickup_2'
+    PATH = 'AI-Powered-Pickup_3'
     torch.save(network.state_dict(),PATH)
 #%% LOAD A MODEL
     network = RNN()
@@ -400,5 +422,5 @@ if __name__ == "__main__":
 
 #%%
     from scipy.io.wavfile import write
-    write("test_out_final.wav", 44100, out.astype(np.int16))
+    write("test_out_final3.wav", 44100, out.astype(np.int16))
 # %%
