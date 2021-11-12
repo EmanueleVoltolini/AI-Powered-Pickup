@@ -112,8 +112,8 @@ def wrapperargs(func, args):
     return func(*args)
 
 def smooth_signal(input):
-  smooth_input = smooth(input,31,'blackman')
-  return smooth_input[15:-15]
+  smooth_input = smooth(input,15,'blackman')
+  return smooth_input[7:-7]
 
 #%% MODEL 
 
@@ -306,7 +306,7 @@ class RNN(nn.Module):
 if __name__ == "__main__":
 
     # Define some constant
-    EPOCHS = 10
+    EPOCHS = 1000
     LEARNING_RATE = 5*pow(10, -4)
     #LEARNING_RATE = 0.01
     up_freq = 2048
@@ -391,13 +391,13 @@ if __name__ == "__main__":
 #                                            val_tar, loss_functions,7)
 #        scheduler.step(val_loss)
 #%%
-    x = np.linspace(1,len(losses),10)
+    x = np.linspace(1,len(losses),1000)
     plt.figure()
     plt.plot(x,losses)
     plt.xlabel("epochs")
     plt.title("loss")  
 # %%
-    PATH = 'AI-Powered-Pickup_3'
+    PATH = 'AI-Powered-Pickup_4'
     torch.save(network.state_dict(),PATH)
 #%% LOAD A MODEL
     network = RNN()
@@ -422,5 +422,5 @@ if __name__ == "__main__":
 
 #%%
     from scipy.io.wavfile import write
-    write("test_out_final3.wav", 44100, out.astype(np.int16))
+    write("test_out_final4.wav", 44100, out.astype(np.int16))
 # %%
