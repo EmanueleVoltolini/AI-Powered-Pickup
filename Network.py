@@ -3,7 +3,7 @@
 import torch
 import os
 import torch.nn as nn
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, dataset
 from torch.utils.data import DataLoader
 import torchaudio
 import torchvision
@@ -14,7 +14,7 @@ import scipy
 import librosa
 import numpy as np
 import librosa.display
-from numpy import pi, log10
+from numpy import double, pi, log10
 import matplotlib.pyplot as plt
 import sklearn.preprocessing as preprocessing
 from scipy.io import wavfile
@@ -396,16 +396,21 @@ if __name__ == "__main__":
     plt.plot(x,losses)
     plt.xlabel("epochs")
     plt.title("loss")  
-# %%
+#%%
     PATH = 'AI-Powered-Pickup_4'
-    torch.save(network.state_dict(),PATH)
+#%%
+#    torch.save(network.state_dict(),PATH)
 #%% LOAD A MODEL
     network = RNN()
     network.load_state_dict(torch.load(PATH))
     network.eval()
 # %%
-    train_split_in = split_audio(traindata[:,0], int(fs/2))
-    train_split_tar = split_audio(traindata[:,1], int(fs/2))
+    inp = np.ones([len(traindata[0:44100*7,0]),1,1])
+    tar = np.ones([len(traindata[0:44100*7,0]),1,1])
+    inp[:,0,0] = traindata[0:44100*7,0]
+    tar[:,0,0] = traindata[0:44100*7,1]
+    train_split_in = torch.tensor(inp, dtype = torch.float).cuda()
+    train_split_tar = torch.tensor(tar, dtype = torch.float).cuda()
 #    output, loss = network.process_data(train_split_in,
 #                                     train_split_tar, loss_functions, 100000)
 #    from scipy.io.wavfile import write
@@ -422,5 +427,9 @@ if __name__ == "__main__":
 
 #%%
     from scipy.io.wavfile import write
-    write("test_out_final4.wav", 44100, out.astype(np.int16))
+    write("test_out_final5.wav", 44100, out.cpu().numpy().astype(np.int16))
+# %%
+    write("in.wav", 44100, inp.astype(np.int16))
+    write("tar.wav", 44100, tar.astype(np.int16))
+
 # %%
