@@ -112,8 +112,11 @@ def wrapperargs(func, args):
     return func(*args)
 
 def smooth_signal(input):
-  smooth_input = smooth(input,15,'blackman')
-  return smooth_input[7:-7]
+  '''Takes in input a signal and returned a smoothed version of it.
+  For the smoothing process is used a blackman window.
+  See the function "smooth" for more details.'''
+  smooth_input = smooth(input,25,'blackman')
+  return smooth_input[12:-12]
 
 #%% MODEL 
 
@@ -210,20 +213,44 @@ class PreEmph(nn.Module):
       target = self.conv_filter(target.permute(1, 2, 0))
 
       return output.permute(2, 0, 1), target.permute(2, 0, 1)
-
-class Loss(nn.Module):
+class DCLoss(nn.Module):
     def __init__(self):
-        super(Loss,self).__init__()
-        self.pre = PreEmph()
+        super(DCLoss, self).__init__()
+        self.epsilon = 0.00001
+
+    def forward(self, output, target):
+        loss = torch.pow(torch.add(torch.mean(target, 0), -torch.mean(output, 0)), 2)
+        loss = torch.mean(loss)
+        energy = torch.mean(torch.pow(target, 2)) + self.epsilon
+        loss = torch.div(loss, energy)
+        return loss*10000
+
+class ESRLoss(nn.Module):
+    def __init__(self):
+        super(ESRLoss,self).__init__()
+#        self.pre = PreEmph()
         self.epsilon = 0.00001
  
     def forward(self, output, target):
-        output , target = self.pre(output, target)
+#        output , target = self.pre(output, target)
         loss = torch.add(target, -output)
         loss = torch.pow(loss, 2)
         loss = torch.mean(loss)
         energy = torch.mean(torch.pow(target, 2)) + self.epsilon
         loss = torch.div(loss, energy)
+        return loss
+
+class Loss(nn.Module):
+    def __init__(self):
+        super(Loss,self).__init__()
+        self.ESR = ESRLoss()
+        self.DC = DCLoss()
+        self.epsilon = 0.00001
+ 
+    def forward(self, output, target):
+        ESR = self.ESR(output,target)
+        DC = self.DC(output, target)
+        loss = torch.add(ESR,DC)
         return loss
 
 
@@ -306,7 +333,7 @@ class RNN(nn.Module):
 if __name__ == "__main__":
 
     # Define some constant
-    EPOCHS = 1000
+    EPOCHS = 500
     LEARNING_RATE = 5*pow(10, -4)
     #LEARNING_RATE = 0.01
     up_freq = 2048
@@ -318,7 +345,7 @@ if __name__ == "__main__":
 
     trainfiles = ["chords","hotel_cal","A_blues"]
     validfiles = ["anastasia","autumn","funk"]
-    testfile = ["mix_note_chord"]
+    testfile = ["mixed_nc"]
 
     traindata = concatenate_audio(trainfiles)
     validata = concatenate_audio(validfiles)
@@ -391,15 +418,15 @@ if __name__ == "__main__":
 #                                            val_tar, loss_functions,7)
 #        scheduler.step(val_loss)
 #%%
-    x = np.linspace(1,len(losses),1000)
+    x = np.linspace(1,len(losses),500)
     plt.figure()
     plt.plot(x,losses)
     plt.xlabel("epochs")
     plt.title("loss")  
 #%%
-    PATH = 'AI-Powered-Pickup_4'
+    PATH = 'AI-Powered-Pickup_test_no_preemph'
 #%%
-#    torch.save(network.state_dict(),PATH)
+    torch.save(network.state_dict(),PATH)
 #%% LOAD A MODEL
     network = RNN()
     network.load_state_dict(torch.load(PATH))
@@ -411,6 +438,9 @@ if __name__ == "__main__":
     tar[:,0,0] = traindata[0:44100*7,1]
     train_split_in = torch.tensor(inp, dtype = torch.float).cuda()
     train_split_tar = torch.tensor(tar, dtype = torch.float).cuda()
+#%%   
+    train_split_in = split_audio(traindata[:,0], int(fs/2))
+    train_split_tar = split_audio(traindata[:,1], int(fs/2))
 #    output, loss = network.process_data(train_split_in,
 #                                     train_split_tar, loss_functions, 100000)
 #    from scipy.io.wavfile import write
@@ -427,7 +457,7 @@ if __name__ == "__main__":
 
 #%%
     from scipy.io.wavfile import write
-    write("test_out_final5.wav", 44100, out.cpu().numpy().astype(np.int16))
+    write("test_out_test_nopreemph.wav", 44100, output.astype(np.int16))
 # %%
     write("in.wav", 44100, inp.astype(np.int16))
     write("tar.wav", 44100, tar.astype(np.int16))
