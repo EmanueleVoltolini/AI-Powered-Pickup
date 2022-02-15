@@ -524,13 +524,14 @@ if __name__ == "__main__":
 
 #%% Defining a Path to save the model/audio 
     PATH = 'AI_target'
+    MODEL_PATH = 'model_new_dataset'
 
 #%% Save the model in use 
     torch.save(network.state_dict(),PATH)
 
 #%% Load a model
     network = RNN()
-    network.load_state_dict(torch.load(PATH))
+    network.load_state_dict(torch.load(MODEL_PATH))
     network.eval()
 # %% Define an array of 7 sec of audio that will be given as input to the network
     inp = np.ones([len(traindata[fs*0:fs*15,0]),1,1])
