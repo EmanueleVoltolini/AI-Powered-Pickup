@@ -105,7 +105,7 @@ if __name__ == "__main__":
     patience_counter = 0
     writer = SummaryWriter(os.path.join('runs2', model_name))
 
-#%%  TRAINING
+#  TRAINING
     losses = []                         #list to save the loss value each epoch
     min_loss = 1e10
     
