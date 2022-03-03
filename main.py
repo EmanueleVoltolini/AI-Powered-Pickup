@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     trainfiles = ["open_chords","hotel_cal","A_blues"]  # name of the audio used for the training data
     validfiles = ["anastasia","autumn","funk"]          # name of the audio used for the validation data
-    testfile = ["mix_note_chord"]                             # name of the audio used for the test data
+    testfile = ["mixed_nc"]                             # name of the audio used for the test data
 
     ############################################################################################################
     ######################################### SIGNAL PROCESSING ################################################

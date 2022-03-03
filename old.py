@@ -21,7 +21,6 @@ import matplotlib.pyplot as plt
 import sklearn.preprocessing as preprocessing
 from scipy.io import wavfile
 from scipy import signal   
-from pydub import AudioSegment, effects  
 from contextlib import nullcontext
 from scipy.signal import butter, lfilter, freqz
 
