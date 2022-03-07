@@ -1,6 +1,9 @@
 # 07/03/2022
-## training performed
-- Try the normalization of the input and output given to the network as 
+
+## **training performed**
+
+- Try the normalization of the input and output given to the network as:
+
 ```{r test-python, engine='python'}
 def normalize_audio(audio):
     max = np.max(audio)
@@ -18,7 +21,19 @@ def concatenate_audio(input, AUDIO_DIR, ext):
     out_in = np.concatenate((out_in,audio_in))
     out_tar = np.concatenate((out_tar,audio_tar))
   out = np.zeros([len(out_in),2])
-  *out[:,0] = normalize_audio(out_in)*
-  *out[:,1] = normalize_audio(out_tar)*
+  out[:,0] = normalize_audio(out_in)
+  out[:,1] = normalize_audio(out_tar)
   return out
 ```
+
+## **Ideas for the next tasks**
+
+### *Short period*
+
+- Try to match the spectrum of the energy between the input and the target
+- Understand how much the results change using the low pass filter
+- Set the enviroment for the polimi machine --> ask Plosen
+
+### *Long period*
+
+- Try to train on the low frequencies only and on the high frequencies after
