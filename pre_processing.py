@@ -101,8 +101,8 @@ def concatenate_audio(input, AUDIO_DIR, ext):
     out_in = np.concatenate((out_in,audio_in))
     out_tar = np.concatenate((out_tar,audio_tar))
   out = np.zeros([len(out_in),2])
-  out[:,0] = np.array(out_in)
-  out[:,1] = np.array(out_tar)
+  out[:,0] = normalize_audio(out_in)
+  out[:,1] = normalize_audio(out_tar)
   return out
 
 def split_audio(audio, frame_len): 
@@ -134,3 +134,8 @@ def split_audio_overlap(audio, frame_len, overlap = 0.5):
       dataset[:,i,0] = torch.mul(triang, dataset[:,i,0])
       
   return dataset
+
+def normalize_audio(audio):
+    max = np.max(audio)
+    normalized_signal = np.array((audio / np.max(np.abs(audio))) * 32767, np.int16)           # Considering a 16 bit audio 
+    return normalized_signal
