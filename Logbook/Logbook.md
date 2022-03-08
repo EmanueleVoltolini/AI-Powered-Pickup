@@ -48,6 +48,26 @@ The results obtained from the last training are really bad, seems more a distort
 
 Here is the audio result:
 
-https://user-images.githubusercontent.com/55618574/157212559-fe78b37f-e68c-4ce1-98a5-311035dbe9c2.mp4
+<https://user-images.githubusercontent.com/55618574/157212559-fe78b37f-e68c-4ce1-98a5-311035dbe9c2.mp4>
 
+And here there is the loss result (in log scale):
 
+![alt text](loss_07-03-2022.png "Loss")
+
+## Done
+
+- Training with normalization btw -1 and 1 of the input and target signal
+- Start to update the Logbook with the past progress of the thesis
+
+### *Short period*
+
+- Finish to read and understand the paper "Effect_removal"
+- Try to match the spectrum of the energy between the input and the target
+- Understand how much the results change using the low pass filter
+- Set the enviroment for the polimi machine --> ask Plosen
+- Start writing the introduction
+
+### *Long period*
+
+- Try to train on the low frequencies only and on the high frequencies after
+- Try to see if the paper "Effect_removal" could have some good implementation for our purpose
