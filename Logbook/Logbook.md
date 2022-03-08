@@ -1,4 +1,6 @@
-# 07/03/2022
+# ***LOGBOOK***
+
+## --> 07/03/2022
 
 ## **training performed**
 
@@ -37,3 +39,13 @@ def concatenate_audio(input, AUDIO_DIR, ext):
 ### *Long period*
 
 - Try to train on the low frequencies only and on the high frequencies after
+
+## --> 08/03/2022
+
+## Results of the previous day
+
+The results obtained from the last training are really bad, seems more a distortion simulation than an acoustic guitar :(
+
+Here is the audio result:
+
+<https://github.com/EmanueleVoltolini/AI-Powered-Pickup/blob/code_update/Logbook/Distortion_07-03-2022.mov>
