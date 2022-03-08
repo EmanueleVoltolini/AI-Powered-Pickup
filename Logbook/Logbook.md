@@ -48,4 +48,6 @@ The results obtained from the last training are really bad, seems more a distort
 
 Here is the audio result:
 
-<https://github.com/EmanueleVoltolini/AI-Powered-Pickup/blob/code_update/Logbook/Distortion_07-03-2022.mov>
+https://user-images.githubusercontent.com/55618574/157212559-fe78b37f-e68c-4ce1-98a5-311035dbe9c2.mp4
+
+
