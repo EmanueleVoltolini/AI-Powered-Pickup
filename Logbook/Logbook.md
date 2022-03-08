@@ -54,6 +54,13 @@ The image is taken from the reference paper, we can try to structure our dataset
 
 ## --> OCTOBER 2021
 
+## **Link to the presentations**
+
+- 04/10/2021 -->28/10/2021
+  - <https://docs.google.com/presentation/d/1JEnwVpFatTIpygRyNFb8jgqm-Rnqdj4jSRUfyQcTo7Y/edit#slide=id.gf080f14cc4_0_6>
+- 29/10/2021:
+  - <https://docs.google.com/presentation/d/1C420WwMMnPQDSc4_IOPOUJxso8gSTa_J35J1HSbVtzw/edit#slide=id.gef9b1274ad_0_465>
+
 ## **Done**
 
 - understand how works the loss function of the reference paper and see if it's meaningful for our purpose
@@ -120,7 +127,84 @@ As we can see with the smoothing process the loss value seems to decrease signif
 
 ## --> NOVEMBER 2021
 
+## *Link to the presentations*
+
+- 05/11/2021:
+  - <https://docs.google.com/presentation/d/1wFjhghcgC8WfFZKi5QvnKG64pVL0mmSeLV8nIN9kv18/edit#slide=id.gf080f14cc4_0_6>
+- 08/11/2021:
+  - <https://docs.google.com/presentation/d/1ZuAIcYuj4taZmzRFjUFQ5xx05IoFooKoL1dgkaiAPh8/edit#slide=id.gf080f14cc4_0_653>
+- 10/11/2021:
+  - <https://docs.google.com/presentation/d/1F0pBUAuTuzzPkwDBJ2Y53KZaFWq3wiMW6Fi3EFNh1qw/edit#slide=id.g1012186a33e_0_12>
+- 12/11/2021:
+  - <https://docs.google.com/presentation/d/1ULSw3WOE4VEJ-f-XQIaayT33CyM5_wNO9jvtWk1eKZk/edit#slide=id.g101144107f1_0_316>
+- 19/11/2021:
+  - <https://docs.google.com/presentation/d/1GldEV8jPKn8TYnvafuaBJEoXpWfAZqfq30PE3HqPLDI/edit#slide=id.g101144107f1_0_399>
+- 24/11/2021:
+  - <https://docs.google.com/presentation/d/1vuVTy2FEA6DwkkE2igsCSbLGEipId0Nhq86sqiHxWOY/edit#slide=id.g1043ec9ba5f_0_11>
+- 29/11/2021:
+  - <https://docs.google.com/presentation/d/1ZBbkGd8qK34evE4hnrOg-qs3KOCCBQSPLoWbGiVoL30/edit#slide=id.g101144107f1_0_316>
+
 ## **Done**
+
+- Coding the structure of the network
+- Having a better comprehension on the network
+- Coding the loss function
+- Enjoying my thesis
+- More test on the loss
+- Coding the training process
+- Compare the spectrogram of the two signal output-target
+- Implement the DC loss function in the code  
+- Try to resolve the clicking noise
+- Try the training applying an high pass filter in the pre-rprocessing
+- Other test on the network
+- Test the network with target = 0 to see if the network will learn something
+
+## **Output**
+
+![alt text](tar_out_nov.png "Target - output nov")
+
+As we can see the two signal are really different one from the other, the target signal is concentrated on the lower frequencies, on the other side the result obtained is uniform around the bandwith btw 0 and 2 kHz.
+
+## **Training**
+
+The training is structured in the following way:
+
+![alt text](training.png "Training")
+
+Some result in term of loss:
+
+![alt text](train_res_nov.png "Training result nov")
+
+As we can see the result in term of loss show a similar behaviour with the one taken by the reference paper.
+
+## **Problems**
+
+Even if the behaviour resambles the one of the reference paper, the audio results are still pretty bad for the aim we want to achieve. (see presentation 12/11/2021)
+
+We try to high-pass the signal to see if we obtain better results on the output, but the results was worste than before.
+
+![alt text](signals_nov.png "Signals nov")
+
+Maybe the network is not learning??
+
+We try to use as a target a signal = 0, and even in this situation the network wasn't able to reproduce the target signal.
+
+![alt text](loss_tar=0.png "loss tar=0 nov")
+
+Another problem encountered is the clicking nooise introduced by the network. At each begin of segment we find discontinuities in the signal, so we try to smooth the signal at the end and beginning of each segment, without success.
+
+![alt text](smoothing_end_nov.png "Try to smoothing the segment")
+
+## --> DECEMBER 2021
+
+## *Link of the presentations*
+
+- 01/12/2021 :)
+  - <https://docs.google.com/presentation/d/1QdFHdG7W-zAqg1Zd66MaR_yOvuKjdmtIllvIqgUF4is/edit#slide=id.g10511282586_0_0>
+- 10/12/2021:
+  - <https://docs.google.com/presentation/d/1akIw4xZTCjpMjgMI452rII6IRnHfNfF2naTAs79raf8/edit#slide=id.gf080f14cc4_0_6>
+- 17/12/2021:
+  - <https://docs.google.com/presentation/d/1XM2_nMeRQAmRTuDLkVVVBy4cXJ0BP9jUslXGGVq0dy8/edit#slide=id.gf080f14cc4_0_6>
 
 ## --> 07/03/2022
 
