@@ -206,6 +206,181 @@ Another problem encountered is the clicking nooise introduced by the network. At
 - 17/12/2021:
   - <https://docs.google.com/presentation/d/1XM2_nMeRQAmRTuDLkVVVBy4cXJ0BP9jUslXGGVq0dy8/edit#slide=id.gf080f14cc4_0_6>
 
+## **Done**
+
+- the network learn with tar=0
+- have some result on the lower frequencies:)
+- study on the output results
+- clean the dataset audio
+- try new configuration of the model
+
+## ***Dataset***
+
+![alt text](clean_dataset.png "Cleaning dataset")
+
+As we can see we've clean all the dataset audio from the noise of the first samples
+
+## ***Model***
+
+We can observe the old november results, the network wasn't learning:
+
+![alt text](result_nov.png "old result nov")
+
+Changing the library used to load the audio from *wave* to *librosa* and adding a butter low pass filter in the pre-processing, finally the network was learning with the target_signal=0:
+
+![alt text](tar=0_dic.png "New result dec")
+
+This is the loss function relative to the new model:
+
+![alt text](loss_dec.png "loss dec")
+
+We can appreciate the similarity in the time domain btw the output and the target wrt the previous results:
+
+![alt text](result_dec.png "Result dec")
+
+We can here also the audio result in the presentation "01/12/2021"
+
+Also from the spectrogram prospective is appreciatable the similarity in the lower freuqencies btw target and output:
+
+![alt text](spec_dec.png "Spectrogram dec")
+
+![alt text](spec_dec_fb.png "Spec dec full bandwidth")
+
+### *Test on the model*
+
+![alt text](Test_dec.png "Test dec")
+
+We perform other test on the network to improve the results, in particular on the mid/high frequencies, but it permorms only worste.
+
+## ***Problem***
+
+In addition to the mid/high frequencies problem, it still remains the clicking noise due to the discontinuities btw adjacent segments.
+
+![alt text](click_dec.png "Clicking noise dec")
+
+## --> 25/12/2021 --> 10/02/2022 **SESSION**
+
+## --> 11/02/2022
+
+### Link
+
+- <https://docs.google.com/presentation/d/1vO5qUebBdNyvz00WuGkBzI-6N4UX5u3D4L1S2h6gOp4/edit#slide=id.gf080f14cc4_0_653>
+
+## **Done**
+
+- performed other test on different model
+
+## **Problems***
+
+No improvements from the best old model
+
+![alt text](loss_feb_no_impr.png "Feb no improvements")
+
+## **Next**
+
+- Study the paper that Sebastian sent me: “Removing distortion effects in music”
+- Understand how to have results also for middle and high frequencies  
+- Start writing the thesis
+
+## --> 18/02/2022
+
+### Link
+
+- <https://docs.google.com/presentation/d/1cdfVc1SwAqtwtKOmkHJKjvoeT5yyPU30EutVjsFwFj4/edit#slide=id.g101144107f1_0_316>
+
+## **Done**
+
+- Resolve the clicking noise applying a triangular window on the 50% overlapping segments --> the network is able to learn the continuity (still some noise is present)
+
+## **Problem**
+
+Applying the triangular window we resolved the clicking noise, but on the other side the network output results are worst than before:
+
+![alt text](loss_feb_no_click.png "Feb no click")
+
+You can also hear the audio results comparison in the presentation 18/02/2022.
+
+## **Next**
+
+- Apply the windowning to the best model try to have the same old results
+- Understand how to have results also for middle and high frequencies  
+- Start writing the thesis
+
+## --> 25/02/2022
+
+### Link
+
+- <https://docs.google.com/presentation/d/1N2WKQmNoDVFIBe78AvB9QaOeLetJpuB1DfU5O0Fgb2U/edit#slide=id.g101144107f1_0_316>
+
+## **Done**
+
+- apply the windowing to the best model
+- have a proper well written code --> implement also the validation and test part of the code
+
+## **Problems**
+
+- Tensorboard problem --> compatibility of the version of pytorch and the other libraries
+- The windowing reduce the general amount of energy of the signal and the output is bad
+- Maybe the network doesn't suits our task?
+
+## ***Training***
+
+Even applying the triangular windowing of the segments in the best model, the outputs of the various configuration are worste than the old model
+
+You can see the various example in the presentation (25/02/2022)
+
+## **Next**
+
+- Continue to experiment with the new network changing the parameters
+- Trying new windowing function rather than triangular :  
+  - Raffa: Tuckey window
+- Finish reordering the code
+- Resolve the tensorboard problem
+- Having a draft of the introduction
+
+## --> 04/03/2022
+
+### Link
+
+- <https://docs.google.com/presentation/d/198k-3p-weLbt8FKwim9dOPfUWDxynOPBGULpXZap5zg/edit#slide=id.g101144107f1_0_316>
+
+## **Done**
+
+- Finish reordering the code:
+  - main
+  - pre-processing
+  - general functions
+  - network
+- Resolving the Tensorboard problem
+- Resolving the problems due to the compatibilities of the libraries' version
+- Study the spectrogram of the results:
+  - Before resolving the clicking noise
+  - After resolving the clicking noise
+
+## ***Spectrograms***
+
+![alt text](spec_feb.png "spectrogram feb triang")
+
+Even on the lower frequencies with the new model the result are bad, also in term of energy, seems that the model is losing energy somewhere.
+
+Here is a comparison on the full bandwidth:
+
+![alt text](spec_feb_fb.png "spectrogram feb triang full bd")
+
+## **Time domain**
+
+Also in the time domain we can see the energy loss in the amplitude of the output signal (WTF is going on!?):
+
+![alt text](sign_feb.png "Signal feb triang")
+
+## **Next**
+
+- Restart with the best model and try the Tukey window to remove clicking noise
+- Study the paper on removing the distortion effect, maybe a new approach?
+- Organize all the data output that I have in a meaningful manner
+- Volume problem → try to normalize the input-output
+- Having a draft of the introduction
+
 ## --> 07/03/2022
 
 ## **training performed**
@@ -277,3 +452,9 @@ And here there is the loss result (in log scale):
 
 - Try to train on the low frequencies only and on the high frequencies after
 - Try to see if the paper "Effect_removal" could have some good implementation for our purpose
+
+## --> 09/03/2022
+
+## **Done**
+
+- new training with normalization
