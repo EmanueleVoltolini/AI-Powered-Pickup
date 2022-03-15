@@ -136,6 +136,6 @@ def split_audio_overlap(audio, frame_len, overlap = 0.5):
   return dataset
 
 def normalize_audio(audio):
-    max = np.max(audio)
-    normalized_signal = np.array((audio / np.max(np.abs(audio))) * 32767, np.int16)           # Considering a 16 bit audio 
+    max = np.max(np.abs(audio))
+    normalized_signal = np.array(audio / max)           # Considering a 16 bit audio 
     return normalized_signal

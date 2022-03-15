@@ -16,7 +16,7 @@ if __name__ == "__main__":
     ############################################################################################################
     ############################################# PARAMETERS ###################################################
     ############################################################################################################
-    EPOCHS = 1
+    EPOCHS = 1000
     LEARNING_RATE = 5*pow(10, -4)
     up_freq = 2048
     AUDIO_DIR = "Dataset"
@@ -111,7 +111,6 @@ if __name__ == "__main__":
     
     for epoch in range(EPOCHS):
         ep_st_time = time.time()
-        print(f"Epoch {epoch+1}")
 
         # Train one epoch
         epoch_loss = network.train_one_epoch(train_in,train_tar, up_freq, 1000, batch_size,optimiser,loss_functions,n_shuffle)
@@ -120,7 +119,6 @@ if __name__ == "__main__":
         losses.append(epoch_loss.item())
         
         if (epoch_loss.item() < min_loss):
-            print("Alè!")
             count = 0
             min_loss = epoch_loss.item()
         else:
