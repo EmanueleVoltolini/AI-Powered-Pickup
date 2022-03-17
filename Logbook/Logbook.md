@@ -458,3 +458,11 @@ And here there is the loss result (in log scale):
 ## **Done**
 
 - new training with normalization
+
+## --> 15/03/2022
+
+## **Check**
+
+- check that the tensor are all int16 --> not so sure it's good idea
+- find a good learning rate
+- use more data in the training process
