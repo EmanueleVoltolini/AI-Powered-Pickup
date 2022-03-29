@@ -16,7 +16,7 @@ if __name__ == "__main__":
     ############################################################################################################
     ############################################# PARAMETERS ###################################################
     ############################################################################################################
-    EPOCHS = 50
+    EPOCHS = 10
     LEARNING_RATE = 1*pow(10, -5)
     up_freq = 2048
     AUDIO_DIR = "Dataset"
@@ -98,7 +98,7 @@ if __name__ == "__main__":
     train_track = net.TrainTrack()
     
     # Defining the scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=5, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=10, verbose=True)
 
     # Initialization of other parameters 
     init_time = time.time() - start_time + train_track['total_time']*3600
@@ -117,13 +117,6 @@ if __name__ == "__main__":
         
         # Append the value of the loss at each epoch
         losses.append(epoch_loss.item())
-        
-        if (epoch_loss.item() < min_loss):
-            count = 0
-            min_loss = epoch_loss.item()
-        else:
-            count = count + 1
-
         # Run validation
         if epoch % validation_f == 0:
             val_ep_st_time = time.time()
