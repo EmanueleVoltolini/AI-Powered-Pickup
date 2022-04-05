@@ -68,8 +68,8 @@ def smooth_signal(input):
   '''Takes in input a signal and returned a smoothed version of it.
   For the smoothing process is used a blackman window.
   See the function "smooth" for more details.'''
-  smooth_input = smooth(input,7,'blackman')
-  return smooth_input[3:-3]
+  smooth_input = smooth(input,5,'blackman')
+  return smooth_input[2:-2]
 
 def high_pass(input):     
   '''perform an high-pass filter on the signal, 
@@ -85,6 +85,16 @@ def butter_lowpass(cutoff, fs, order=5):
 
 def butter_lowpass_filter(data, cutoff, fs, order=5):
     b, a = butter_lowpass(cutoff, fs, order=order)
+    y = lfilter(b, a, data)
+    y[0:-15] = y[15:]
+    y[-15:] = data[-15:]
+    return y
+
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    return butter(order, [lowcut, highcut], fs=fs, btype='band')
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     y[0:-15] = y[15:]
     y[-15:] = data[-15:]
@@ -126,16 +136,16 @@ def split_audio_overlap(audio, frame_len, overlap = 0.5):
   seg_num = math.floor(audio.shape[0] / (frame_len * (1 - overlap))) -1
   dataset = torch.empty((frame_len, seg_num,1))
   # Tringular window for the signal 
-  triang = torch.tensor(signal.triang(frame_len))
+  #triang = torch.tensor(signal.triang(frame_len))
 
   # Load the audio for the training set
   for i in range(seg_num):
       dataset[:,i,:] = torch.from_numpy(audio[i * int(frame_len*(1 - overlap)):i * int(frame_len*(1 - overlap))+frame_len,:])
-      dataset[:,i,0] = torch.mul(triang, dataset[:,i,0])
+      #dataset[:,i,0] = torch.mul(triang, dataset[:,i,0])
       
   return dataset
 
 def normalize_audio(audio):
     max = np.max(np.abs(audio))
-    normalized_signal = np.array(audio / max)           # Considering a 16 bit audio 
+    normalized_signal = np.array(audio / max)           
     return normalized_signal
