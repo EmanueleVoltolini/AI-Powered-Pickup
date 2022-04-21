@@ -146,7 +146,7 @@ class Loss(nn.Module):
 # Main class for the LSTM RNN
 class RNN(nn.Module):
 
-    def __init__(self, input_size=1, output_size=1, hidden_size=12, num_layers=1,bias=True):
+    def __init__(self, input_size=1, output_size=1, hidden_size=96, num_layers=1,bias=True):
         super(RNN, self).__init__()
         self.input_size = input_size
         self.output_size = output_size

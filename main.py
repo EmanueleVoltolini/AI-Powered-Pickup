@@ -30,14 +30,14 @@ if __name__ == "__main__":
 
     # Filter requirements
     order = 6  # sample rate, Hz
-    cutoff = 2000  # desired cutoff frequency of the filter, Hz
-    high_cut = 5000
-    overlap = 0.5
+    cutoff = 7000  # desired cutoff frequency of the filter, Hz
+    high_cut = 10000
+    overlap = 0.25
     validation_f = 10  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
-    trainfiles = ["open_chords", "hotel_cal", "A_blues"]  # name of the audio used for the training data
-    validfiles = ["anastasia", "autumn", "funk"]  # name of the audio used for the validation data
+    trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
+    validfiles = ["anastasia", "autumn", "chords"]  # name of the audio used for the validation data
     testfile = ["mixed_nc"]  # name of the audio used for the test data
 
     ############################################################################################################
@@ -56,6 +56,7 @@ if __name__ == "__main__":
 
     traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
     #traindata[:, 0] = pp.butter_bandpass_filter(traindata[:, 0], cutoff, high_cut, fs, order)
+    #traindata[:, 1] = pp.butter_bandpass_filter(traindata[:, 1], cutoff, high_cut, fs, order)
 
     # Splitting the audio in overlapping windowed segments that match the input dimension of the network
     train_in = pp.split_audio_overlap(traindata[:, 0], int(fs * 3), overlap)
@@ -108,7 +109,7 @@ if __name__ == "__main__":
 
     for epoch in range(EPOCHS):
         ep_st_time = time.time()
-        if epoch == 700:
+        if epoch == 300 or epoch == 600 or epoch == 1200:
             optimiser.param_groups[0]['lr'] = LEARNING_RATE
         # Train one epoch
         epoch_loss = network.train_one_epoch(train_in, train_tar, up_freq, 1000, batch_size, optimiser, loss_functions,
