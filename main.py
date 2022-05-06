@@ -30,10 +30,10 @@ if __name__ == "__main__":
 
     # Filter requirements
     order = 6  # sample rate, Hz
-    cutoff = 7000  # desired cutoff frequency of the filter, Hz
+    cutoff = 2000  # desired cutoff frequency of the filter, Hz
     high_cut = 10000
     overlap = 0.25
-    validation_f = 10  # validation frequency in number of epochs
+    validation_f = 7  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
     trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
@@ -54,7 +54,7 @@ if __name__ == "__main__":
     validata[:, 0] = pp.smooth_signal(validata[:, 0])
     testdata[:, 0] = pp.smooth_signal(testdata[:, 0])
 
-    traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
+    #traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
     #traindata[:, 0] = pp.butter_bandpass_filter(traindata[:, 0], cutoff, high_cut, fs, order)
     #traindata[:, 1] = pp.butter_bandpass_filter(traindata[:, 1], cutoff, high_cut, fs, order)
 
@@ -96,7 +96,7 @@ if __name__ == "__main__":
     train_track = net.TrainTrack()
 
     # Defining the scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.5, patience=7, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=5, verbose=True)
 
     # Initialization of other parameters 
     init_time = time.time() - start_time + train_track['total_time'] * 3600
@@ -136,7 +136,7 @@ if __name__ == "__main__":
             print('current learning rate: ' + str(optimiser.param_groups[0]['lr']))
         train_track.train_epoch_update(epoch_loss.item(), ep_st_time, time.time(), init_time, epoch)
         writer.add_scalar('Loss/train', train_track['training_losses'][-1], epoch)
-        writer.add_scalar('LR/current', optimiser.param_groups[0]['lr'])
+        writer.add_scalar('LR/current', optimiser.param_groups[0]['lr'], epoch)
 
         if validation_p and patience_counter > validation_p:
             print('validation patience limit reached at epoch ' + str(epoch))
