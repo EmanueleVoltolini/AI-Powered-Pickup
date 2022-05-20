@@ -5,6 +5,7 @@ import time
 import Network as net
 import pre_processing as pp
 import general as gen
+import Dataset as data
 from torch.utils.tensorboard import SummaryWriter
 from numpy import double, pi, log10
 from scipy.io.wavfile import write
@@ -15,58 +16,59 @@ if __name__ == "__main__":
     ############################################################################################################
     ############################################# PARAMETERS ###################################################
     ############################################################################################################
-    EPOCHS = 1000
-    LEARNING_RATE = 0.001
-    up_freq = 2048
+    DATASET_DIR = 'Dataset.csv'
     AUDIO_DIR = "Dataset"
+    CSV_DIR = "Dataset.csv"
     save_path = "Results"
     PATH = 'Model'
+    EPOCHS = 1000
+    LEARNING_RATE = 0.005
+    up_freq = 2048
     n_segments = 40
     ext = ["input", "target"]  # extension of the audio dataset
     fs = 44100
     batch_size = 40
     model_name = "RNN"
     n_shuffle = 10  # number of segment for each shuffled group
+    segment_len = int(fs)*3
 
     # Filter requirements
     order = 6  # sample rate, Hz
     cutoff = 2000  # desired cutoff frequency of the filter, Hz
     high_cut = 10000
-    overlap = 0.25
+    overlap = 0.5
     validation_f = 7  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
-    trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
-    validfiles = ["anastasia", "autumn", "chords"]  # name of the audio used for the validation data
-    testfile = ["mixed_nc"]  # name of the audio used for the test data
+    #trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
+    #validfiles = ["anastasia", "autumn", "chords"]  # name of the audio used for the validation data
+    #testfile = ["mixed_nc"]  # name of the audio used for the test data
 
     ############################################################################################################
     ######################################### SIGNAL PROCESSING ################################################
     ############################################################################################################
 
     # concatenate the audio to obtain a single audio containing all the data
-    traindata = pp.concatenate_audio(trainfiles, AUDIO_DIR, ext)
-    validata = pp.concatenate_audio(validfiles, AUDIO_DIR, ext)
-    testdata = pp.concatenate_audio(testfile, AUDIO_DIR, ext)
+    traindata, validata, testdata = data.load_data(CSV_DIR, AUDIO_DIR)
 
     # Smoothing the input signal given to the network to have a better comparison with the target 
     traindata[:, 0] = pp.smooth_signal(traindata[:, 0])
     validata[:, 0] = pp.smooth_signal(validata[:, 0])
     testdata[:, 0] = pp.smooth_signal(testdata[:, 0])
 
-    #traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
+    traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
     #traindata[:, 0] = pp.butter_bandpass_filter(traindata[:, 0], cutoff, high_cut, fs, order)
     #traindata[:, 1] = pp.butter_bandpass_filter(traindata[:, 1], cutoff, high_cut, fs, order)
 
     # Splitting the audio in overlapping windowed segments that match the input dimension of the network
-    train_in = pp.split_audio_overlap(traindata[:, 0], int(fs * 3), overlap)
-    train_tar = pp.split_audio_overlap(traindata[:, 1], int(fs * 3), overlap)
+    train_in = pp.split_audio_overlap(traindata[:, 0], segment_len, overlap)
+    train_tar = pp.split_audio_overlap(traindata[:, 1], segment_len, overlap)
 
-    val_in = pp.split_audio_overlap(validata[:, 0], int(fs * 3))
-    val_tar = pp.split_audio_overlap(validata[:, 1], int(fs * 3))
+    val_in = pp.split_audio_overlap(validata[:, 0], segment_len)
+    val_tar = pp.split_audio_overlap(validata[:, 1], segment_len)
 
-    test_in = pp.split_audio_overlap(testdata[:, 0], int(fs * 3))
-    test_tar = pp.split_audio_overlap(testdata[:, 1], int(fs * 3))
+    test_in = pp.split_audio_overlap(testdata[:, 0], segment_len)
+    test_tar = pp.split_audio_overlap(testdata[:, 1], segment_len)
 
     network = net.RNN()
 
@@ -89,14 +91,14 @@ if __name__ == "__main__":
         cuda = 1
 
     # Defining the used optimizer
-    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
+    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
 
     # Defining the loss function
     loss_functions = net.Loss()
     train_track = net.TrainTrack()
 
     # Defining the scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=5, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=3, verbose=True)
 
     # Initialization of other parameters 
     init_time = time.time() - start_time + train_track['total_time'] * 3600
@@ -109,8 +111,8 @@ if __name__ == "__main__":
 
     for epoch in range(EPOCHS):
         ep_st_time = time.time()
-        if epoch == 300 or epoch == 600 or epoch == 1200:
-            optimiser.param_groups[0]['lr'] = LEARNING_RATE
+        if epoch == 500:
+            optimiser.param_groups[0]['lr'] = LEARNING_RATE*0.1
         # Train one epoch
         epoch_loss = network.train_one_epoch(train_in, train_tar, up_freq, 1000, batch_size, optimiser, loss_functions,
                                              n_shuffle)
