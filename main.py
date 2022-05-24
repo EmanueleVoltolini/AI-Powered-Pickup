@@ -29,15 +29,15 @@ if __name__ == "__main__":
     fs = 44100
     batch_size = 40
     model_name = "RNN"
-    n_shuffle = 10  # number of segment for each shuffled group
+    n_shuffle = 3  # number of segment for each shuffled group
     segment_len = int(fs)*3
 
     # Filter requirements
     order = 6  # sample rate, Hz
     cutoff = 2000  # desired cutoff frequency of the filter, Hz
     high_cut = 10000
-    overlap = 0.5
-    validation_f = 7  # validation frequency in number of epochs
+    overlap = 0.75
+    validation_f = 3  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
     #trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
@@ -64,11 +64,11 @@ if __name__ == "__main__":
     train_in = pp.split_audio_overlap(traindata[:, 0], segment_len, overlap)
     train_tar = pp.split_audio_overlap(traindata[:, 1], segment_len, overlap)
 
-    val_in = pp.split_audio_overlap(validata[:, 0], segment_len)
-    val_tar = pp.split_audio_overlap(validata[:, 1], segment_len)
+    val_in = pp.split_audio_overlap(validata[:, 0], segment_len, overlap)
+    val_tar = pp.split_audio_overlap(validata[:, 1], segment_len, overlap)
 
-    test_in = pp.split_audio_overlap(testdata[:, 0], segment_len)
-    test_tar = pp.split_audio_overlap(testdata[:, 1], segment_len)
+    test_in = pp.split_audio_overlap(testdata[:, 0], segment_len, overlap)
+    test_tar = pp.split_audio_overlap(testdata[:, 1], segment_len, overlap)
 
     network = net.RNN()
 
@@ -91,14 +91,14 @@ if __name__ == "__main__":
         cuda = 1
 
     # Defining the used optimizer
-    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
+    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
 
     # Defining the loss function
     loss_functions = net.Loss()
     train_track = net.TrainTrack()
 
     # Defining the scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=3, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=5, verbose=True)
 
     # Initialization of other parameters 
     init_time = time.time() - start_time + train_track['total_time'] * 3600
@@ -111,8 +111,8 @@ if __name__ == "__main__":
 
     for epoch in range(EPOCHS):
         ep_st_time = time.time()
-        if epoch == 500:
-            optimiser.param_groups[0]['lr'] = LEARNING_RATE*0.1
+        if epoch == 400:
+            optimiser.param_groups[0]['lr'] = LEARNING_RATE * 0.5
         # Train one epoch
         epoch_loss = network.train_one_epoch(train_in, train_tar, up_freq, 1000, batch_size, optimiser, loss_functions,
                                              n_shuffle)

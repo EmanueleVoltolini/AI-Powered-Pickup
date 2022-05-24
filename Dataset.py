@@ -53,14 +53,23 @@ def load_audio(X,y, DATASET_DIR):
     return out
 
 def load_data(CSV_DIR, DATASET_DIR):
+    testfile = ["mixed_nc"]
+    ext = ["input","target"]
     df = pd.read_csv(CSV_DIR)
     X = df.loc[df['ext'] == 'input']
     y = df.loc[df['ext'] == 'target']
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=1)
+    #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
+    #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=1)
+    X_train = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 0) & (df['name']!= 'mixed_nc')]
+    y_train = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 0) & (df['name']!= 'mixed_nc')]
+    X_val = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 1) & (df['name']!= 'mixed_nc')]
+    y_val = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 1) & (df['name']!= 'mixed_nc')]
+    X_test = df.loc[(df['name'] == 'mixed_nc') & (df['ext'] == 'input')]
+    y_test = df.loc[(df['name'] == 'mixed_nc') & (df['ext'] == 'target')]
     traindata = load_audio(X_train,y_train,DATASET_DIR)
     validata = load_audio(X_val,y_val,DATASET_DIR)
-    testdata = load_audio(X_test,y_test,DATASET_DIR)
+    #testdata = load_audio(X_test,y_test,DATASET_DIR)
+    testdata = pp.concatenate_audio(testfile, DATASET_DIR, ext)
     return traindata, validata, testdata
 
 

@@ -133,14 +133,14 @@ def split_audio_overlap(audio, frame_len, overlap = 0.5):
   overlapping w.r.t the frame length (std value of overlap is set to 0.5).
   Return a torch.tensor of dimension [frame_len, num_segments,1]'''                                             
   audio = np.expand_dims(audio, 1) if len(audio.shape) == 1 else audio
-  seg_num = math.floor(audio.shape[0] / (frame_len * (1 - overlap))) -1
+  seg_num = math.floor(audio.shape[0] / (frame_len * (1 - overlap))) - 1
   dataset = torch.empty((frame_len, seg_num,1))
   # Tringular window for the signal 
   #triang = torch.tensor(signal.triang(frame_len))
 
   # Load the audio for the training set
-  for i in range(seg_num):
-      dataset[:,i,:] = torch.from_numpy(audio[i * int(frame_len*(1 - overlap)):i * int(frame_len*(1 - overlap))+frame_len,:])
+  for i in range(seg_num-2):
+      dataset[:,i,:] = torch.from_numpy(audio[i * int(frame_len*(1 - overlap)):i * int(frame_len*(1 - overlap)) + frame_len,:])
       #dataset[:,i,0] = torch.mul(triang, dataset[:,i,0])
       
   return dataset

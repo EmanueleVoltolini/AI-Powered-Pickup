@@ -4,6 +4,21 @@ import math
 import numpy as np
 from contextlib import nullcontext
 
+def shuffle_data(input,block):
+    num = input%block;
+    shuffle = torch.arange(input)
+    if (num):
+        shuffled = torch.reshape(shuffle[0:-num], (int(len(shuffle)/block),block))
+        shuffled = shuffled[torch.randperm(shuffled.size()[0])]
+        shuffled = torch.reshape(shuffled, [input-num])
+        shuffle[0:-num] = shuffled
+    else:
+        shuffled = torch.reshape(shuffle[0:], (int(len(shuffle)/block),block))
+        shuffled = shuffled[torch.randperm(shuffled.size()[0])]
+        shuffled = torch.reshape(shuffled, [input])
+
+    return shuffle
+
 # PreEmph performs the high-pass pre-emphasis filter on the signal
 class PreEmph(nn.Module):
     def __init__(self):
@@ -70,7 +85,7 @@ class Loss(nn.Module):
 # Main class for the LSTM RNN
 class RNN(nn.Module):
 
-    def __init__(self, input_size=1, output_size=1, hidden_size=34, num_layers=1,bias=True):
+    def __init__(self, input_size=1, output_size=1, hidden_size=96, num_layers=1,bias=True):
         super(RNN, self).__init__()
         self.input_size = input_size
         self.output_size = output_size
@@ -95,8 +110,8 @@ class RNN(nn.Module):
         self.hidden = None
     
     def train_one_epoch(self, in_data, tar_data, up_fr, init_samples, batch_size, optim, loss_func,n_shuffle):
-        shuffle = np.arange(in_data.shape[1])
-        #shuffle = shuffle_data(in_data.shape[1],n_shuffle)
+        #shuffle = np.arange(in_data.shape[1])
+        shuffle = shuffle_data(in_data.shape[1],n_shuffle)
 
         ep_loss = 0
 
