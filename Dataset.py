@@ -4,6 +4,7 @@ import pandas as pd
 import librosa
 import numpy as np
 import re 
+import csv
 import pre_processing as pp
 from sklearn.model_selection import train_test_split
 from os import listdir
@@ -29,45 +30,54 @@ def extract_data(PATH):                  # extracts the data from the Dataset fo
         data.append([name[0],ext[0],1, len_second])
     return data
 
-def load_audio(X,y, DATASET_DIR):
+def load_audio(X,y, DATASET_DIR, type):
     out_in = []
     out_tar = []
-    for i in range(np.shape(X)[1]):
-        audio_in, fs = librosa.load(DATASET_DIR + '/' + X.iat[i,0] + '-' + X.iat[i,1] + ".wav", sr=None)
-        audio_tar, _ = librosa.load(DATASET_DIR + '/' + y.iat[i,0] + '-' + y.iat[i,1] + ".wav", sr=None)
-        if(len(audio_in)%2 == 1):
-            audio_in = np.delete(audio_in,len(audio_in)-1)
-        if(len(audio_tar)%2 == 1):
-            audio_tar = np.delete(audio_tar,len(audio_tar)-1)
-        first_in, second_in = np.split(audio_in,2)
-        first_tar, second_tar = np.split(audio_tar,2)
-        if (X.iat[i,2] == 0 and y.iat[i,2] == X.iat[i,2]):
+    if type == "train":
+        for i in range(np.shape(X)[0]):
+            audio_in, fs = librosa.load(DATASET_DIR + '/' + X.iat[i,0] + "-input.wav", sr=None)
+            audio_tar, _ = librosa.load(DATASET_DIR + '/' + y.iat[i,0] + "-target.wav", sr=None)
+            out_in = np.concatenate((out_in,audio_in))
+            out_tar = np.concatenate((out_tar,audio_tar))
+    else:
+        for i in range(np.shape(X)[0]):
+            audio_in, fs = librosa.load(DATASET_DIR + '/' + X.iat[i,0] + "-input.wav", sr=None)
+            audio_tar, _ = librosa.load(DATASET_DIR + '/' + y.iat[i,0] + "-target.wav", sr=None)
+            if(len(audio_in)%2 == 1):
+                audio_in = np.delete(audio_in,len(audio_in)-1)
+            if(len(audio_tar)%2 == 1):
+                audio_tar = np.delete(audio_tar,len(audio_tar)-1)
+            first_in, _= np.split(audio_in,2)
+            first_tar, _ = np.split(audio_tar,2)
             out_in = np.concatenate((out_in,first_in))
             out_tar = np.concatenate((out_tar,first_tar))
-        elif(X.iat[i,2] == 1 and y.iat[i,2] == X.iat[i,2]):
-            out_in = np.concatenate((out_in,second_in))
-            out_tar = np.concatenate((out_tar,second_tar))
     out = np.zeros([len(out_in),2])
+    out[:,0] = out_in
+    out[:,1] = out_tar
     out[:,0] = pp.normalize_audio(out_in)
     out[:,1] = pp.normalize_audio(out_tar)
     return out
 
 def load_data(CSV_DIR, DATASET_DIR):
-    testfile = ["mixed_nc"]
+    if (CSV_DIR == 'Dataset_Taylor.csv'):
+        testfile = ["Strumming5"]
+    else:
+        testfile = ["mixed_nc"]
     ext = ["input","target"]
     df = pd.read_csv(CSV_DIR)
     X = df.loc[df['ext'] == 'input']
     y = df.loc[df['ext'] == 'target']
     #X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=1)
     #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=1)
-    X_train = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 0) & (df['name']!= 'mixed_nc')]
-    y_train = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 0) & (df['name']!= 'mixed_nc')]
-    X_val = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 1) & (df['name']!= 'mixed_nc')]
-    y_val = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 1) & (df['name']!= 'mixed_nc')]
+    X_train = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 0) & (df['name']!= testfile[0])]
+    y_train = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 0) & (df['name']!= testfile[0])]
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
+    #X_val = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 1) & (df['name']!= testfile[0])]
+    #y_val = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 1) & (df['name']!= testfile[0])]
     X_test = df.loc[(df['name'] == 'mixed_nc') & (df['ext'] == 'input')]
     y_test = df.loc[(df['name'] == 'mixed_nc') & (df['ext'] == 'target')]
-    traindata = load_audio(X_train,y_train,DATASET_DIR)
-    validata = load_audio(X_val,y_val,DATASET_DIR)
+    traindata = load_audio(X_train,y_train,DATASET_DIR, "train")
+    validata = load_audio(X_val,y_val,DATASET_DIR, "val")
     #testdata = load_audio(X_test,y_test,DATASET_DIR)
     testdata = pp.concatenate_audio(testfile, DATASET_DIR, ext)
     return traindata, validata, testdata

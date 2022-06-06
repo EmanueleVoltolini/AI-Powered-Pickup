@@ -29,7 +29,7 @@ if __name__ == "__main__":
     fs = 44100
     batch_size = 40
     model_name = "RNN"
-    n_shuffle = 3  # number of segment for each shuffled group
+    n_shuffle = 10  # number of segment for each shuffled group
     segment_len = int(fs)*3
 
     # Filter requirements
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     cutoff = 2000  # desired cutoff frequency of the filter, Hz
     high_cut = 10000
     overlap = 0.75
-    validation_f = 3  # validation frequency in number of epochs
+    validation_f = 7  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
     #trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
@@ -56,7 +56,7 @@ if __name__ == "__main__":
     validata[:, 0] = pp.smooth_signal(validata[:, 0])
     testdata[:, 0] = pp.smooth_signal(testdata[:, 0])
 
-    traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
+    #traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
     #traindata[:, 0] = pp.butter_bandpass_filter(traindata[:, 0], cutoff, high_cut, fs, order)
     #traindata[:, 1] = pp.butter_bandpass_filter(traindata[:, 1], cutoff, high_cut, fs, order)
 
@@ -91,14 +91,14 @@ if __name__ == "__main__":
         cuda = 1
 
     # Defining the used optimizer
-    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
+    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
 
     # Defining the loss function
     loss_functions = net.Loss()
     train_track = net.TrainTrack()
 
     # Defining the scheduler
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=5, verbose=True)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimiser, 'min', factor=0.7, patience=3, verbose=True)
 
     # Initialization of other parameters 
     init_time = time.time() - start_time + train_track['total_time'] * 3600

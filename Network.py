@@ -110,8 +110,8 @@ class RNN(nn.Module):
         self.hidden = None
     
     def train_one_epoch(self, in_data, tar_data, up_fr, init_samples, batch_size, optim, loss_func,n_shuffle):
-        #shuffle = np.arange(in_data.shape[1])
-        shuffle = shuffle_data(in_data.shape[1],n_shuffle)
+        shuffle = np.arange(in_data.shape[1])
+        #shuffle = shuffle_data(in_data.shape[1],n_shuffle)
 
         ep_loss = 0
 
