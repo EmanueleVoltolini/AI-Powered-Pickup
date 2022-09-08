@@ -1,3 +1,4 @@
+from unicodedata import bidirectional
 import torch
 import torch.nn as nn
 import math
@@ -68,24 +69,25 @@ class ESRLoss(nn.Module):
         loss = torch.div(loss, energy)
         return loss
 
-# Loss calculate the loss function summing the 2 contributions (ESR + DC)
+# Loss calculate the loss function 
 class Loss(nn.Module):
     def __init__(self):
         super(Loss,self).__init__()
         self.ESR = ESRLoss()
-        self.DC = DCLoss()
+        #self.DC = DCLoss()
         self.epsilon = 0.0000001
  
     def forward(self, output, target):
         ESR = self.ESR(output,target)
-        DC = self.DC(output, target)
-        loss = torch.add(ESR,DC)
-        return loss + self.epsilon
+        #DC = self.DC(output, target)
+        #loss = torch.add(ESR,DC)
+        #return loss + self.epsilon
+        return ESR + self.epsilon
 
 # Main class for the LSTM RNN
 class RNN(nn.Module):
 
-    def __init__(self, input_size=1, output_size=1, hidden_size=96, num_layers=1,bias=True):
+    def __init__(self, input_size=1, output_size=1, hidden_size=32, num_layers=1,bias=True):
         super(RNN, self).__init__()
         self.input_size = input_size
         self.output_size = output_size

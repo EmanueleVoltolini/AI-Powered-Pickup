@@ -68,8 +68,8 @@ def smooth_signal(input):
   '''Takes in input a signal and returned a smoothed version of it.
   For the smoothing process is used a blackman window.
   See the function "smooth" for more details.'''
-  smooth_input = smooth(input,5,'blackman')
-  return smooth_input[2:-2]
+  smooth_input = smooth(input,7,'blackman')
+  return smooth_input[3:-3]
 
 def high_pass(input):     
   '''perform an high-pass filter on the signal, 

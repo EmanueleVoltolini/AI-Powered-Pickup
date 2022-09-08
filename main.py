@@ -17,46 +17,46 @@ if __name__ == "__main__":
     ############################################# PARAMETERS ###################################################
     ############################################################################################################
     DATASET_DIR = 'Dataset.csv'
+    #DATASET_DIR = 'Dataset_Taylor.csv'
     AUDIO_DIR = "Dataset"
+    #AUDIO_DIR = "Dataset_Taylor"
     CSV_DIR = "Dataset.csv"
+    #CSV_DIR = "Dataset_Taylor.csv"
     save_path = "Results"
     PATH = 'Model'
-    EPOCHS = 1000
-    LEARNING_RATE = 0.005
+    EPOCHS = 1
+    LEARNING_RATE = 0.01
     up_freq = 2048
     n_segments = 40
     ext = ["input", "target"]  # extension of the audio dataset
     fs = 44100
     batch_size = 40
     model_name = "RNN"
-    n_shuffle = 10  # number of segment for each shuffled group
-    segment_len = int(fs)*3
+    n_shuffle = 7  # number of segment for each shuffled group
+    segment_len = int(fs*7)
 
     # Filter requirements
     order = 6  # sample rate, Hz
     cutoff = 2000  # desired cutoff frequency of the filter, Hz
     high_cut = 10000
     overlap = 0.75
-    validation_f = 7  # validation frequency in number of epochs
+    validation_f = 5  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
-    #trainfiles = ["open_chords", "hotel_cal", "A_blues", "funk", "cory", "mayer"]  # name of the audio used for the training data
-    #validfiles = ["anastasia", "autumn", "chords"]  # name of the audio used for the validation data
-    #testfile = ["mixed_nc"]  # name of the audio used for the test data
-
     ############################################################################################################
-    ######################################### SIGNAL PROCESSING ################################################
+    #################################### SPLITTING AND PREPROCESSING ###########################################
     ############################################################################################################
 
     # concatenate the audio to obtain a single audio containing all the data
     traindata, validata, testdata = data.load_data(CSV_DIR, AUDIO_DIR)
-
+    
     # Smoothing the input signal given to the network to have a better comparison with the target 
     traindata[:, 0] = pp.smooth_signal(traindata[:, 0])
     validata[:, 0] = pp.smooth_signal(validata[:, 0])
     testdata[:, 0] = pp.smooth_signal(testdata[:, 0])
 
-    #traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
+    # Apply different filters to the signal input signal 
+    traindata[:,0] = pp.butter_lowpass_filter(traindata[:, 0], cutoff, fs, order)
     #traindata[:, 0] = pp.butter_bandpass_filter(traindata[:, 0], cutoff, high_cut, fs, order)
     #traindata[:, 1] = pp.butter_bandpass_filter(traindata[:, 1], cutoff, high_cut, fs, order)
 
@@ -69,6 +69,10 @@ if __name__ == "__main__":
 
     test_in = pp.split_audio_overlap(testdata[:, 0], segment_len, overlap)
     test_tar = pp.split_audio_overlap(testdata[:, 1], segment_len, overlap)
+
+    ############################################################################################################
+    ########################################## NETWORKS PARAMETERS #############################################
+    ############################################################################################################
 
     network = net.RNN()
 
@@ -91,7 +95,7 @@ if __name__ == "__main__":
         cuda = 1
 
     # Defining the used optimizer
-    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-5)
+    optimiser = torch.optim.Adam(network.parameters(), lr=LEARNING_RATE, weight_decay=1e-4)
 
     # Defining the loss function
     loss_functions = net.Loss()
@@ -105,20 +109,23 @@ if __name__ == "__main__":
     patience_counter = 0
     writer = SummaryWriter(os.path.join('runs2', model_name))
 
-    #  TRAINING
-    losses = []  # list to save the loss value each epoch
+    ############################################################################################################
+    ############################################# TRAINING #####################################################
+    ############################################################################################################
+
     min_loss = 1e10
 
     for epoch in range(EPOCHS):
         ep_st_time = time.time()
-        if epoch == 400:
-            optimiser.param_groups[0]['lr'] = LEARNING_RATE * 0.5
+        if epoch == 500:
+            optimiser.param_groups[0]['lr'] = LEARNING_RATE * 0.8
+        if epoch == 700:
+            optimiser.param_groups[0]['lr'] = LEARNING_RATE * 0.1
+        #    optimiser.param_groups[0]['weight_decay'] = 1e-6
         # Train one epoch
         epoch_loss = network.train_one_epoch(train_in, train_tar, up_freq, 1000, batch_size, optimiser, loss_functions,
                                              n_shuffle)
 
-        # Append the value of the loss at each epoch
-        losses.append(epoch_loss.item())
         # Run validation
         if epoch % validation_f == 0:
             val_ep_st_time = time.time()
@@ -140,7 +147,7 @@ if __name__ == "__main__":
         writer.add_scalar('Loss/train', train_track['training_losses'][-1], epoch)
         writer.add_scalar('LR/current', optimiser.param_groups[0]['lr'], epoch)
 
-        if validation_p and patience_counter > validation_p:
+        if patience_counter > validation_p:
             print('validation patience limit reached at epoch ' + str(epoch))
             break
     lossESR = net.ESRLoss()
@@ -156,7 +163,7 @@ if __name__ == "__main__":
     best_val_net = torch.load(os.path.join(save_path, 'model_best'))
     network.load_state_dict(best_val_net)
     test_output, test_loss = network.process_data(test_in,
-                                                  test_tar, loss_functions, 10)
+                                                  test_tar, loss_functions, 10)                                               
     test_loss_ESR = lossESR(test_output, test_tar)
     write(os.path.join(save_path, "test_out_bestv.wav"),
           fs, test_output.cpu().numpy()[:, 0, 0])

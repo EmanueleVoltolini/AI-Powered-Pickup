@@ -71,7 +71,7 @@ def load_data(CSV_DIR, DATASET_DIR):
     #X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.25, random_state=1)
     X_train = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 0) & (df['name']!= testfile[0])]
     y_train = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 0) & (df['name']!= testfile[0])]
-    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.2, random_state=1)
+    X_train, X_val, y_train, y_val = train_test_split(X_train, y_train, test_size=0.15, random_state=7)
     #X_val = df.loc[(df['ext'] == 'input') & (df['n_segm'] == 1) & (df['name']!= testfile[0])]
     #y_val = df.loc[(df['ext'] == 'target') & (df['n_segm'] == 1) & (df['name']!= testfile[0])]
     X_test = df.loc[(df['name'] == 'mixed_nc') & (df['ext'] == 'input')]
