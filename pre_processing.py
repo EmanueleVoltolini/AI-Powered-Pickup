@@ -90,6 +90,16 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
     y[-15:] = data[-15:]
     return y
 
+def butter_bandpass(lowcut, highcut, fs, order=5):
+    return butter(order, [lowcut, highcut], fs=fs, btype='band')
+
+def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
+    b, a = butter_bandpass(lowcut, highcut, fs, order=order)
+    y = lfilter(b, a, data)
+    y[0:-15] = y[15:]
+    y[-15:] = data[-15:]
+    return y
+
 def concatenate_audio(input, AUDIO_DIR, ext): 
   '''Takes in input a list with the name of the audio to concatenate
   and return a single audio with the concatenated audio '''                
@@ -101,8 +111,8 @@ def concatenate_audio(input, AUDIO_DIR, ext):
     out_in = np.concatenate((out_in,audio_in))
     out_tar = np.concatenate((out_tar,audio_tar))
   out = np.zeros([len(out_in),2])
-  out[:,0] = np.array(out_in)
-  out[:,1] = np.array(out_tar)
+  out[:,0] = normalize_audio(out_in)
+  out[:,1] = normalize_audio(out_tar)
   return out
 
 def split_audio(audio, frame_len): 
@@ -123,14 +133,19 @@ def split_audio_overlap(audio, frame_len, overlap = 0.5):
   overlapping w.r.t the frame length (std value of overlap is set to 0.5).
   Return a torch.tensor of dimension [frame_len, num_segments,1]'''                                             
   audio = np.expand_dims(audio, 1) if len(audio.shape) == 1 else audio
-  seg_num = math.floor(audio.shape[0] / (frame_len * (1 - overlap))) -1
+  seg_num = math.floor(audio.shape[0] / (frame_len * (1 - overlap))) - 1
   dataset = torch.empty((frame_len, seg_num,1))
   # Tringular window for the signal 
-  triang = torch.tensor(signal.triang(frame_len))
+  #triang = torch.tensor(signal.triang(frame_len))
 
   # Load the audio for the training set
-  for i in range(seg_num):
-      dataset[:,i,:] = torch.from_numpy(audio[i * int(frame_len*(1 - overlap)):i * int(frame_len*(1 - overlap))+frame_len,:])
-      dataset[:,i,0] = torch.mul(triang, dataset[:,i,0])
+  for i in range(seg_num-2):
+      dataset[:,i,:] = torch.from_numpy(audio[i * int(frame_len*(1 - overlap)):i * int(frame_len*(1 - overlap)) + frame_len,:])
+      #dataset[:,i,0] = torch.mul(triang, dataset[:,i,0])
       
   return dataset
+
+def normalize_audio(audio):
+    max = np.max(np.abs(audio))
+    normalized_signal = np.array(audio / max)           
+    return normalized_signal
