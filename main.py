@@ -24,7 +24,7 @@ if __name__ == "__main__":
     #CSV_DIR = "Dataset_Taylor.csv"
     save_path = "Results"
     PATH = 'Model'
-    EPOCHS = 1
+    EPOCHS = 1000
     LEARNING_RATE = 0.01
     up_freq = 2048
     n_segments = 40
@@ -40,7 +40,7 @@ if __name__ == "__main__":
     cutoff = 2000  # desired cutoff frequency of the filter, Hz
     high_cut = 10000
     overlap = 0.75
-    validation_f = 5  # validation frequency in number of epochs
+    validation_f = 3  # validation frequency in number of epochs
     validation_p = 200  # validation patient in number of epochs
 
     ############################################################################################################
